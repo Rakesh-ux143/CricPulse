@@ -39,8 +39,7 @@
 <script src="assets/firebase-config.js"></script>
 <script src="assets/app.js"></script>
 <script>
-  db.ref("match").on("value", (snap) => {
-    const m = snap.val();
+  watchCurrentMatch((m) => {
     const el = document.getElementById("ticker");
     if (!m || m.status !== "live") { el.style.display = "none"; return; }
     el.style.display = "inline-flex";

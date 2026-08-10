@@ -22,8 +22,7 @@
 <script>
   renderNav("teams.html");
 
-  db.ref("match").on("value", (snap) => {
-    const m = snap.val();
+  watchCurrentMatch((m) => {
     const el = document.getElementById("teamsRoot");
     if (!m || !m.teamA) {
       el.innerHTML = `<div class="panel"><span class="tag">No teams created yet</span></div>`;

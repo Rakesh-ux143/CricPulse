@@ -21,8 +21,7 @@
 <script>
   renderNav("players.html");
 
-  db.ref("match").on("value", (snap) => {
-    const m = snap.val();
+  watchCurrentMatch((m) => {
     const el = document.getElementById("playersRoot");
     if (!m || !m.teamA) {
       el.innerHTML = `<div class="panel"><span class="tag">No players yet</span></div>`;

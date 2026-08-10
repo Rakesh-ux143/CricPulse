@@ -1,9 +1,20 @@
-const matchRef = db.ref("match");
+let currentMatchId = null;
+let matchRef = null;
 let state = null;
 
-matchRef.on("value", (snap) => {
-  state = snap.val();
-  render();
+db.ref("currentMatchId").on("value", (snap) => {
+  currentMatchId = snap.val();
+  if (matchRef) matchRef.off();
+  if (!currentMatchId) {
+    state = null;
+    render();
+    return;
+  }
+  matchRef = db.ref("matches/" + currentMatchId);
+  matchRef.on("value", (snap2) => {
+    state = snap2.val();
+    render();
+  });
 });
 
 function playersArr(team) {
@@ -15,11 +26,14 @@ function playersArr(team) {
 function createTeams() {
   const nameA = document.getElementById("teamAName").value.trim() || "Team A";
   const nameB = document.getElementById("teamBName").value.trim() || "Team B";
-  matchRef.set({
+  const id = newId("match");
+  db.ref("matches/" + id).set({
     status: "setup",
+    createdAt: Date.now(),
     teamA: { name: nameA, players: {} },
     teamB: { name: nameB, players: {} },
   });
+  db.ref("currentMatchId").set(id);
 }
 
 function addPlayer(team) {
@@ -55,7 +69,7 @@ function startInnings() {
     bowlingCard[p.id] = { name: p.name, balls: 0, runs: 0, wickets: 0 };
   });
 
-  matchRef.update({
+  const updates = {
     status: "live",
     innings: state.innings ? state.innings + 1 : 1,
     battingTeam,
@@ -68,7 +82,18 @@ function startInnings() {
     bowlingCard,
     target: state.innings === 1 ? (state.score.runs + 1) : (state.target || null),
     history: state.history || [],
-  });
+  };
+  // snapshot innings 1 so the completed match keeps a full two-innings summary
+  if (state.innings === 1) {
+    updates.firstInnings = {
+      teamKey: state.battingTeam,
+      teamName: state[state.battingTeam].name,
+      score: state.score,
+      battingCard: state.battingCard,
+      bowlingCard: state.bowlingCard,
+    };
+  }
+  matchRef.update(updates);
 }
 
 // ---------- SCORING ----------
@@ -177,8 +202,18 @@ function endInnings() {
   matchRef.update({ status: state.innings === 1 ? "innings_break" : "completed" });
 }
 
-function resetMatch() {
-  if (confirm("This clears the current match completely. Continue?")) matchRef.set(null);
+function newMatch() {
+  if (!confirm("Start a new match? This one will be saved to match history.")) return;
+  if (state && state.status !== "completed") {
+    matchRef.update({ status: "abandoned" });
+  }
+  db.ref("currentMatchId").set(null);
+}
+
+function deleteMatchForever() {
+  if (!confirm("Permanently delete this match? This cannot be undone.")) return;
+  matchRef.remove();
+  db.ref("currentMatchId").set(null);
 }
 
 // ---------- RENDER ----------
@@ -197,7 +232,7 @@ function render() {
     return;
   }
   if (state.status === "completed") {
-    el.innerHTML = `<div class="panel"><h2>Match Completed</h2><p>Final: ${state.score.runs}/${state.score.wickets} (${formatOvers(state.score.balls)} ov)</p><button class="btn danger" onclick="resetMatch()">Start New Match</button></div>`;
+    el.innerHTML = `<div class="panel"><h2>Match Completed</h2><p>${matchResultText(state)}</p><div class="btn-row"><a class="btn secondary" href="scorecard.html?id=${currentMatchId}">View Summary</a><button class="btn gold" onclick="newMatch()">Start New Match</button></div></div>`;
     return;
   }
   el.innerHTML = liveHTML();
@@ -305,8 +340,9 @@ function liveHTML() {
     </div>
     <div class="btn-row">
       <button class="btn secondary" onclick="endInnings()">End Innings</button>
-      <button class="btn danger" onclick="resetMatch()">Reset Match</button>
+      <button class="btn danger" onclick="newMatch()">Start New Match</button>
     </div>
+    <a href="#" onclick="deleteMatchForever();return false;" class="muted" style="font-size:12px;">Delete this match permanently</a>
   </div>
   <div class="panel"><h3 style="margin:0 0 8px;">Ball Log</h3>
     <div class="muted mono" style="max-height:160px;overflow-y:auto;">${(state.history || []).slice().reverse().map((h) => `<div>${h}</div>`).join("")}</div>

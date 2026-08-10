@@ -21,8 +21,7 @@
 <script>
   renderNav("live-score.html");
 
-  db.ref("match").on("value", (snap) => {
-    const m = snap.val();
+  watchCurrentMatch((m, id) => {
     const el = document.getElementById("liveRoot");
     if (!m || !m.status || m.status === "setup") {
       el.innerHTML = `<div class="panel"><span class="tag">Match not started yet</span></div>`;
@@ -63,7 +62,7 @@
       <div class="panel"><h3 style="margin:0 0 8px;">Recent Balls</h3>
         <div class="muted mono">${(m.history || []).slice(-8).reverse().map((h) => `<div>${h}</div>`).join("")}</div>
       </div>
-      <div class="btn-row"><a class="btn secondary" href="scorecard.html">Full Scorecard →</a></div>
+      <div class="btn-row"><a class="btn secondary" href="scorecard.html?id=${id}">Full Scorecard →</a></div>
     `;
   });
 </script>

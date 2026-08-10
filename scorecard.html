@@ -21,20 +21,14 @@
 <script>
   renderNav("scorecard.html");
 
-  db.ref("match").on("value", (snap) => {
-    const m = snap.val();
-    const el = document.getElementById("scoreRoot");
-    if (!m || !m.battingCard) {
-      el.innerHTML = `<div class="panel"><span class="tag">No scorecard yet — start a match from the Admin Panel</span></div>`;
-      return;
-    }
-    const battingName = m[m.battingTeam]?.name || "Batting";
-    const bowlingName = m[m.bowlingTeam]?.name || "Bowling";
+  const params = new URLSearchParams(window.location.search);
+  const requestedId = params.get("id");
 
-    const battingRows = Object.entries(m.battingCard)
+  function renderInnings(m, battingCard, bowlingCard, teamName, score, isCurrent) {
+    const battingRows = Object.entries(battingCard || {})
       .map(([id, p]) => `
-        <tr class="${id === m.strikerId ? "striker" : ""}">
-          <td>${p.name}${id === m.strikerId ? " *" : ""}</td>
+        <tr class="${isCurrent && id === m.strikerId ? "striker" : ""}">
+          <td>${p.name}${isCurrent && id === m.strikerId ? " *" : ""}</td>
           <td>${p.out ? p.howOut : "not out"}</td>
           <td class="mono">${p.runs}</td>
           <td class="mono">${p.balls}</td>
@@ -43,8 +37,7 @@
           <td class="mono">${strikeRate(p.runs, p.balls)}</td>
         </tr>`)
       .join("");
-
-    const bowlingRows = Object.entries(m.bowlingCard || {})
+    const bowlingRows = Object.entries(bowlingCard || {})
       .map(([id, p]) => `
         <tr>
           <td>${p.name}</td>
@@ -54,24 +47,50 @@
           <td class="mono">${economy(p.runs, p.balls)}</td>
         </tr>`)
       .join("");
-
-    el.innerHTML = `
+    return `
       <div class="panel">
-        <h2 style="margin:0 0 4px;">${battingName} — ${m.score.runs}/${m.score.wickets} (${formatOvers(m.score.balls)} ov)</h2>
+        <h2 style="margin:0 0 4px;">${teamName} — ${score.runs}/${score.wickets} (${formatOvers(score.balls)} ov)</h2>
         <table>
           <thead><tr><th>Batter</th><th>Dismissal</th><th>R</th><th>B</th><th>4s</th><th>6s</th><th>SR</th></tr></thead>
           <tbody>${battingRows}</tbody>
         </table>
       </div>
       <div class="panel">
-        <h2 style="margin:0 0 4px;">Bowling — ${bowlingName}</h2>
+        <h2 style="margin:0 0 4px;">Bowling</h2>
         <table>
           <thead><tr><th>Bowler</th><th>O</th><th>R</th><th>W</th><th>Econ</th></tr></thead>
           <tbody>${bowlingRows}</tbody>
         </table>
-      </div>
-    `;
-  });
+      </div>`;
+  }
+
+  function renderMatch(m) {
+    const el = document.getElementById("scoreRoot");
+    if (!m || !m.battingCard) {
+      el.innerHTML = `<div class="panel"><span class="tag">No scorecard yet — start a match from the Admin Panel</span></div>`;
+      return;
+    }
+    const battingName = m[m.battingTeam]?.name || "Batting";
+    let html = `<div class="panel" style="text-align:center;">
+        <span class="tag ${m.status === "live" ? "live" : "done"}">${m.status === "live" ? "LIVE" : m.status.replace("_", " ")}</span>
+        <h1 style="margin:8px 0 0;font-size:24px;">${matchResultText(m)}</h1>
+      </div>`;
+    if (m.firstInnings) {
+      html += `<div class="eyebrow" style="margin-top:10px;">Innings 1</div>` +
+        renderInnings(m, m.firstInnings.battingCard, m.firstInnings.bowlingCard, m.firstInnings.teamName, m.firstInnings.score, false);
+      html += `<div class="eyebrow" style="margin-top:10px;">Innings 2</div>` +
+        renderInnings(m, m.battingCard, m.bowlingCard, battingName, m.score, true);
+    } else {
+      html += renderInnings(m, m.battingCard, m.bowlingCard, battingName, m.score, true);
+    }
+    el.innerHTML = html;
+  }
+
+  if (requestedId) {
+    db.ref("matches/" + requestedId).on("value", (snap) => renderMatch(snap.val()));
+  } else {
+    watchCurrentMatch((m) => renderMatch(m));
+  }
 </script>
 </body>
 </html>

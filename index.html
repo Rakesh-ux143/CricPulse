@@ -20,11 +20,12 @@
   <div class="home-grid">
     <a class="home-tile" href="index.html"><div class="num">01</div><div class="name">Home</div></a>
     <a class="home-tile" href="admin.html"><div class="num">02</div><div class="name">Admin Panel</div></a>
-    <a class="home-tile" href="live-score.html"><div class="num">03</div><div class="name">Live Match</div></a>
-    <a class="home-tile" href="scorecard.html"><div class="num">04</div><div class="name">Scorecard</div></a>
-    <a class="home-tile" href="teams.html"><div class="num">05</div><div class="name">Teams</div></a>
-    <a class="home-tile" href="players.html"><div class="num">06</div><div class="name">Players</div></a>
-    <a class="home-tile" href="obs-ticker.html"><div class="num">07</div><div class="name">OBS Ticker</div></a>
+    <a class="home-tile" href="matches.html"><div class="num">03</div><div class="name">Matches</div></a>
+    <a class="home-tile" href="live-score.html"><div class="num">04</div><div class="name">Live Match</div></a>
+    <a class="home-tile" href="scorecard.html"><div class="num">05</div><div class="name">Scorecard</div></a>
+    <a class="home-tile" href="teams.html"><div class="num">06</div><div class="name">Teams</div></a>
+    <a class="home-tile" href="players.html"><div class="num">07</div><div class="name">Players</div></a>
+    <a class="home-tile" href="obs-ticker.html"><div class="num">08</div><div class="name">OBS Ticker</div></a>
   </div>
 
   <p class="muted" style="margin-top:20px;font-size:12px;">
@@ -40,14 +41,13 @@
 <script>
   renderNav("index.html");
 
-  db.ref("match").on("value", (snap) => {
-    const m = snap.val();
+  watchCurrentMatch((m) => {
     const el = document.getElementById("livePreview");
     if (!m || m.status !== "live") {
-      el.innerHTML = `<div class="panel"><span class="tag">No live match right now</span></div>`;
+      el.innerHTML = `<div class="panel"><span class="tag">No live match right now</span> <a href="matches.html" style="color:var(--gold);font-size:13px;margin-left:8px;">View past matches →</a></div>`;
       return;
     }
-    const battingName = m.battingTeam === "A" ? m.teamA?.name : m.teamB?.name;
+    const battingName = m[m.battingTeam]?.name;
     el.innerHTML = `
       <a href="live-score.html" class="panel scoreboard" style="display:block;">
         <span class="tag live"><span class="live-dot"></span>LIVE</span>
