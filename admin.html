@@ -28,7 +28,9 @@
 <script src="assets/tournament-auth.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-function valid(n,p){return n.trim().length>0 && /^\\d{4}$/.test(p)}
+function valid(n,p){
+  return n.trim().length > 0 && /^\d{4}$/.test(p);
+}
 function updateLogin(){ $("loginBtn").disabled=!valid($("loginName").value,$("loginPass").value); $("createBtn").disabled=!valid($("loginName").value,$("loginPass").value); }
 function updateCreate(){ $("makeBtn").disabled=!valid($("newName").value,$("newPass").value); }
 ["loginName","loginPass"].forEach(id=>$(id).addEventListener("input",updateLogin));
