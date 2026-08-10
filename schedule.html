@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Schedule — CrickScore</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body><div class="wrap">
+<div class="eyebrow">Tournament Schedule</div><h1>Fixtures</h1>
+<div id="scheduleRoot"></div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="assets/firebase-config.js"></script><script src="assets/app.js"></script>
+<script>
+if(typeof renderNav==="function")renderNav("schedule.html");
+db.ref("schedules").on("value",snap=>{
+ const x=snap.val()||{}, list=Object.values(x).sort((a,b)=>(a.datetime||"").localeCompare(b.datetime||""));
+ document.getElementById("scheduleRoot").innerHTML=list.length?list.map(s=>`
+ <div class="panel"><span class="tag">${s.type||"League"}</span>
+ <h2 style="margin:8px 0">${s.teamA||"Team A"} vs ${s.teamB||"Team B"}</h2>
+ <div class="muted">${s.datetime?new Date(s.datetime).toLocaleString():"TBD"} · ${s.venue||"Venue TBD"} · ${s.overs||20} overs</div>
+ </div>`).join(""):'<div class="panel"><span class="tag">No fixtures yet</span></div>';
+});
+</script></body></html>

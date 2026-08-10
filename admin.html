@@ -3,23 +3,95 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Admin Panel — Cricket Scorer</title>
+<title>Admin Panel — CrickScore</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css" />
+<style>
+  .admin-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}
+  .admin-tab{cursor:pointer;border:1px solid rgba(255,255,255,.12);background:#111827;color:#dbe4ef;padding:10px 14px;border-radius:8px;font-weight:700}
+  .admin-tab.active{border-color:var(--gold);color:var(--gold)}
+  .admin-section{display:none}.admin-section.active{display:block}
+  .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .form-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+  @media(max-width:700px){.form-grid,.form-grid.three{grid-template-columns:1fr}}
+  input,select,textarea{width:100%;box-sizing:border-box;background:#0b1220;color:#f4f7fa;border:1px solid #263246;border-radius:7px;padding:10px;font:inherit}
+  label{display:block;font-size:12px;color:#8b98ac;margin-bottom:5px}
+  .score-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .score-actions .btn{min-height:48px}
+  .wide-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  @media(max-width:700px){.wide-grid{grid-template-columns:repeat(2,1fr)}}
+  .ball-chip{display:inline-block;padding:5px 8px;border-radius:5px;background:#162033;margin:3px;font-family:'Roboto Mono',monospace}
+  .danger{border-color:#8e3b3b!important;color:#ff9c9c!important}
+  .success{border-color:#3c805b!important;color:#9be2b8!important}
+  .mini-table{width:100%;border-collapse:collapse}.mini-table th,.mini-table td{padding:8px;border-bottom:1px solid #263246;text-align:left;font-size:13px}
+  .muted2{color:#8b98ac;font-size:12px}
+  .strike{color:var(--gold);font-weight:700}
+</style>
 </head>
 <body>
 <div class="wrap">
-  <div class="eyebrow">Admin Panel</div>
-  <h1 style="margin:0 0 16px;font-size:32px;">Match Control</h1>
-  <div id="adminRoot"></div>
+  <div class="eyebrow">CrickScore Admin</div>
+  <h1 style="margin:0 0 6px;font-size:32px;">Match Control Center</h1>
+  <p class="muted" style="margin-top:0;">Teams → Schedule → League → Ball-by-ball scoring → Points Table → Knockouts</p>
+
+  <div class="admin-tabs">
+    <button class="admin-tab active" data-tab="setup">Match Setup</button>
+    <button class="admin-tab" data-tab="teams">Teams</button>
+    <button class="admin-tab" data-tab="schedule">Schedule</button>
+    <button class="admin-tab" data-tab="scoring">Live Scoring</button>
+  </div>
+
+  <section id="tab-setup" class="admin-section active">
+    <div class="panel">
+      <h2>Start / Manage Match</h2>
+      <div id="setupRoot"></div>
+    </div>
+  </section>
+
+  <section id="tab-teams" class="admin-section">
+    <div class="panel">
+      <h2>Add Teams & Players</h2>
+      <form id="teamForm">
+        <div class="form-grid">
+          <div><label>Team name</label><input id="teamName" required placeholder="e.g. Bengaluru Strikers"></div>
+          <div><label>Short name</label><input id="teamShort" maxlength="5" placeholder="BS"></div>
+        </div>
+        <div style="margin-top:10px"><label>Players (one per line)</label><textarea id="teamPlayers" rows="8" placeholder="Player 1&#10;Player 2&#10;Player 3&#10;..."></textarea></div>
+        <button class="btn" style="margin-top:10px">Save Team</button>
+      </form>
+    </div>
+    <div class="panel"><h3>Registered Teams</h3><div id="teamList"></div></div>
+  </section>
+
+  <section id="tab-schedule" class="admin-section">
+    <div class="panel">
+      <h2>Create Schedule / Fixture</h2>
+      <form id="scheduleForm">
+        <div class="form-grid three">
+          <div><label>Team A</label><select id="schA" required></select></div>
+          <div><label>Team B</label><select id="schB" required></select></div>
+          <div><label>Match type</label><select id="schType"><option>League</option><option>Qualifier</option><option>Eliminator</option><option>Semifinal</option><option>Final</option></select></div>
+          <div><label>Date & time</label><input id="schDate" type="datetime-local" required></div>
+          <div><label>Venue</label><input id="schVenue" placeholder="Ground / Stadium"></div>
+          <div><label>Overs</label><input id="schOvers" type="number" min="1" max="100" value="20" required></div>
+        </div>
+        <button class="btn" style="margin-top:10px">Add Fixture</button>
+      </form>
+    </div>
+    <div class="panel"><h3>Upcoming / Existing Fixtures</h3><div id="scheduleList"></div></div>
+  </section>
+
+  <section id="tab-scoring" class="admin-section">
+    <div id="scoringRoot"></div>
+  </section>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="assets/firebase-config.js"></script>
 <script src="assets/app.js"></script>
-<script>renderNav("admin.html");</script>
+<script>if (typeof renderNav === "function") renderNav("admin.html");</script>
 <script src="assets/admin.js"></script>
 </body>
 </html>
