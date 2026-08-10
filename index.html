@@ -1,12 +1,199 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CrickPulse Dashboard</title><link rel="stylesheet" href="assets/style.css"></head><body>
-<script src="assets/tournament-auth.js"></script><script>requireTournamentLogin()</script>
-<header class="topbar"><div class="brand">🏏 CrickPulse <span class="badge" id="tournamentName"></span></div>
-<nav class="nav"><a class="btn" href="index.html">Dashboard</a><a class="btn" href="teams.html">Teams</a><a class="btn" href="schedule.html">Schedule</a><a class="btn" href="live-score.html">Live Score</a><a class="btn" href="scorecard.html">Scorecard</a><a class="btn" href="points-table.html">Points</a><button class="btn danger" onclick="logoutTournament()">🔒 Logout</button></nav></header>
-<main class="container"><h1>Tournament Dashboard</h1><p class="muted">Tournament data is saved automatically.</p>
-<div class="grid"><div class="card"><b>Teams</b><div class="score" id="teamsCount">0</div></div><div class="card"><b>Matches</b><div class="score" id="matchesCount">0</div></div><div class="card"><b>Completed</b><div class="score" id="completedCount">0</div></div></div>
-<div class="card"><h2>Quick Actions</h2><div class="actions"><a class="btn" href="teams.html">＋ Teams & Players</a><a class="btn" href="schedule.html">＋ Schedule</a><a class="btn" href="live-score.html">🏏 Live Scoring</a><a class="btn" href="points-table.html">🏆 Points Table</a></div></div>
-</main>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script><script src="assets/firebase-config.js"></script>
-<script>const S=getTournamentSession();tournamentName.textContent=S.name;db.ref("tournaments/"+S.id).on("value",s=>{const t=s.val()||{},m=Object.values(t.matches||{});teamsCount.textContent=Object.keys(t.teams||{}).length;matchesCount.textContent=m.length;completedCount.textContent=m.filter(x=>x.status==="Completed").length;});</script>
-</body></html>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>CrickPulse Dashboard</title>
+
+  <link rel="stylesheet" href="assets/style.css">
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+  <header>
+
+    <h1>🏏 CrickPulse</h1>
+
+    <p id="tournamentTitle"></p>
+
+    <button
+      id="logoutBtn"
+      class="btn"
+    >
+      LOGOUT
+    </button>
+
+  </header>
+
+
+  <main>
+
+    <h2>🏆 Tournament Dashboard</h2>
+
+
+    <div class="dashboard-grid">
+
+
+      <a href="teams.html" class="dashboard-card">
+
+        <h3>👥 Teams</h3>
+
+        <p>
+          Add and manage teams and players.
+        </p>
+
+      </a>
+
+
+      <a href="schedule.html" class="dashboard-card">
+
+        <h3>📅 Schedule</h3>
+
+        <p>
+          Create and manage match schedules.
+        </p>
+
+      </a>
+
+
+      <a href="live-score.html" class="dashboard-card">
+
+        <h3>🏏 Live Scoring</h3>
+
+        <p>
+          Score matches ball by ball.
+        </p>
+
+      </a>
+
+
+      <a href="scorecard.html" class="dashboard-card">
+
+        <h3>📋 Scorecard</h3>
+
+        <p>
+          View complete match scorecards.
+        </p>
+
+      </a>
+
+
+      <a href="points-table.html" class="dashboard-card">
+
+        <h3>📊 Points Table</h3>
+
+        <p>
+          View points, wins, losses and NRR.
+        </p>
+
+      </a>
+
+
+      <div class="dashboard-card">
+
+        <h3>🏆 Knockouts</h3>
+
+        <p>
+          Manage qualification and knockout matches.
+        </p>
+
+      </div>
+
+
+    </div>
+
+  </main>
+
+</div>
+
+
+<script>
+
+/* ----------------------------------
+   CHECK TOURNAMENT LOGIN
+---------------------------------- */
+
+const session =
+  sessionStorage.getItem("crickpulseTournament");
+
+
+/*
+  If there is NO login session,
+  don't allow dashboard access.
+*/
+
+if (!session) {
+
+  window.location.replace("admin.html");
+
+}
+
+
+/* ----------------------------------
+   LOAD TOURNAMENT
+---------------------------------- */
+
+let tournament = null;
+
+try {
+
+  tournament = JSON.parse(session);
+
+}
+
+catch (error) {
+
+  sessionStorage.removeItem(
+    "crickpulseTournament"
+  );
+
+  window.location.replace("admin.html");
+
+}
+
+
+/* ----------------------------------
+   SHOW TOURNAMENT NAME
+---------------------------------- */
+
+if (tournament) {
+
+  document.getElementById(
+    "tournamentTitle"
+  ).textContent =
+    "Tournament: " + tournament.name;
+
+}
+
+
+/* ----------------------------------
+   LOGOUT
+---------------------------------- */
+
+document.getElementById(
+  "logoutBtn"
+).addEventListener("click", function () {
+
+  sessionStorage.removeItem(
+    "crickpulseTournament"
+  );
+
+  window.location.replace("admin.html");
+
+});
+
+</script>
+
+</body>
+</html>
