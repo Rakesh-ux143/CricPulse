@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Live Match — Cricket Scorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Live Match</div>
+  <div id="liveRoot"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="assets/firebase-config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  renderNav("live-score.html");
+
+  db.ref("match").on("value", (snap) => {
+    const m = snap.val();
+    const el = document.getElementById("liveRoot");
+    if (!m || !m.status || m.status === "setup") {
+      el.innerHTML = `<div class="panel"><span class="tag">Match not started yet</span></div>`;
+      return;
+    }
+    const battingTeam = m.battingTeam;
+    const battingName = m[battingTeam]?.name || "Batting";
+    const striker = m.battingCard?.[m.strikerId];
+    const nonStriker = m.battingCard?.[m.nonStrikerId];
+    const bowler = m.bowlingCard?.[m.bowlerId];
+
+    let chaseLine = "";
+    if (m.target) {
+      const remaining = m.target - m.score.runs;
+      const ballsLeft = Math.max(0, 20 * 6 - m.score.balls); // adjust 20 to your match overs
+      const rrr = ballsLeft > 0 ? ((remaining / ballsLeft) * 6).toFixed(2) : "-";
+      chaseLine = `<div class="overs">Need ${Math.max(remaining, 0)} runs · RRR ${rrr}</div>`;
+    }
+
+    el.innerHTML = `
+      <div class="panel scoreboard">
+        ${m.status === "live" ? `<span class="tag live"><span class="live-dot"></span>LIVE</span>` : `<span class="tag done">${m.status.replace("_", " ")}</span>`}
+        <div class="team-names" style="margin-top:8px;">${battingName}</div>
+        <div class="score-big mono">${m.score?.runs ?? 0}/${m.score?.wickets ?? 0}</div>
+        <div class="overs">Overs ${formatOvers(m.score?.balls ?? 0)}</div>
+        ${chaseLine}
+      </div>
+      <div class="panel">
+        <div class="grid-2">
+          <div class="card"><div class="muted">${striker?.name || "-"} *</div><div class="mono">${striker?.runs ?? 0} (${striker?.balls ?? 0}) · SR ${strikeRate(striker?.runs ?? 0, striker?.balls ?? 0)}</div></div>
+          <div class="card"><div class="muted">${nonStriker?.name || "-"}</div><div class="mono">${nonStriker?.runs ?? 0} (${nonStriker?.balls ?? 0}) · SR ${strikeRate(nonStriker?.runs ?? 0, nonStriker?.balls ?? 0)}</div></div>
+        </div>
+        <div class="card" style="margin-top:10px;">
+          <div class="muted">Bowling: ${bowler?.name || "-"}</div>
+          <div class="mono">${bowler?.wickets ?? 0}-${bowler?.runs ?? 0} (${formatOvers(bowler?.balls ?? 0)} ov) · Econ ${economy(bowler?.runs ?? 0, bowler?.balls ?? 0)}</div>
+        </div>
+      </div>
+      <div class="panel"><h3 style="margin:0 0 8px;">Recent Balls</h3>
+        <div class="muted mono">${(m.history || []).slice(-8).reverse().map((h) => `<div>${h}</div>`).join("")}</div>
+      </div>
+      <div class="btn-row"><a class="btn secondary" href="scorecard.html">Full Scorecard →</a></div>
+    `;
+  });
+</script>
+</body>
+</html>

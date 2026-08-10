@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Teams — Cricket Scorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Teams</div>
+  <div id="teamsRoot"></div>
+  <p class="muted" style="margin-top:16px;">Add or edit squads from the <a href="admin.html" style="color:var(--gold);">Admin Panel</a>.</p>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="assets/firebase-config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  renderNav("teams.html");
+
+  db.ref("match").on("value", (snap) => {
+    const m = snap.val();
+    const el = document.getElementById("teamsRoot");
+    if (!m || !m.teamA) {
+      el.innerHTML = `<div class="panel"><span class="tag">No teams created yet</span></div>`;
+      return;
+    }
+    const teamCard = (team) => {
+      const players = Object.values(team.players || {});
+      return `<div class="panel">
+        <h2 style="margin:0 0 8px;">${team.name}</h2>
+        <div class="muted" style="margin-bottom:8px;">${players.length} player${players.length === 1 ? "" : "s"}</div>
+        ${players.map((p) => `<span class="tag" style="margin:3px;">${p.name}</span>`).join("") || `<span class="muted">No players added</span>`}
+      </div>`;
+    };
+    el.innerHTML = teamCard(m.teamA) + teamCard(m.teamB);
+  });
+</script>
+</body>
+</html>

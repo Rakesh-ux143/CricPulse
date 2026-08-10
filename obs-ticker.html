@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OBS Ticker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;padding:0;background:transparent;overflow:hidden;}
+  #ticker{
+    display:inline-flex;align-items:center;gap:18px;
+    font-family:'Bebas Neue',sans-serif;color:#F4F7FA;
+    background:rgba(11,18,32,0.82);
+    border:1px solid rgba(232,163,61,0.5);
+    border-radius:10px;
+    padding:12px 22px;
+    position:fixed;bottom:24px;left:24px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.5);
+  }
+  .team{font-size:22px;letter-spacing:0.03em;}
+  .score{font-family:'Roboto Mono',monospace;font-weight:700;font-size:30px;color:#E8A33D;text-shadow:0 0 18px rgba(232,163,61,0.5);}
+  .overs{font-size:15px;color:#8B98AC;font-family:'Roboto Mono',monospace;}
+  .live-dot{width:9px;height:9px;border-radius:50%;background:#D64545;display:inline-block;animation:pulse 1.4s infinite;margin-right:4px;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.25;}}
+  #hidden{display:none;}
+</style>
+</head>
+<body>
+<div id="ticker" class="hidden">
+  <span class="live-dot"></span>
+  <span class="team" id="teamName">—</span>
+  <span class="score" id="scoreText">0/0</span>
+  <span class="overs" id="oversText">(0.0 ov)</span>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="assets/firebase-config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  db.ref("match").on("value", (snap) => {
+    const m = snap.val();
+    const el = document.getElementById("ticker");
+    if (!m || m.status !== "live") { el.style.display = "none"; return; }
+    el.style.display = "inline-flex";
+    document.getElementById("teamName").textContent = m[m.battingTeam]?.name || "";
+    document.getElementById("scoreText").textContent = `${m.score?.runs ?? 0}/${m.score?.wickets ?? 0}`;
+    document.getElementById("oversText").textContent = `(${formatOvers(m.score?.balls ?? 0)} ov)`;
+  });
+</script>
+</body>
+</html>

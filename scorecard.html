@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Scorecard — Cricket Scorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Full Scorecard</div>
+  <div id="scoreRoot"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="assets/firebase-config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  renderNav("scorecard.html");
+
+  db.ref("match").on("value", (snap) => {
+    const m = snap.val();
+    const el = document.getElementById("scoreRoot");
+    if (!m || !m.battingCard) {
+      el.innerHTML = `<div class="panel"><span class="tag">No scorecard yet — start a match from the Admin Panel</span></div>`;
+      return;
+    }
+    const battingName = m[m.battingTeam]?.name || "Batting";
+    const bowlingName = m[m.bowlingTeam]?.name || "Bowling";
+
+    const battingRows = Object.entries(m.battingCard)
+      .map(([id, p]) => `
+        <tr class="${id === m.strikerId ? "striker" : ""}">
+          <td>${p.name}${id === m.strikerId ? " *" : ""}</td>
+          <td>${p.out ? p.howOut : "not out"}</td>
+          <td class="mono">${p.runs}</td>
+          <td class="mono">${p.balls}</td>
+          <td class="mono">${p.fours}</td>
+          <td class="mono">${p.sixes}</td>
+          <td class="mono">${strikeRate(p.runs, p.balls)}</td>
+        </tr>`)
+      .join("");
+
+    const bowlingRows = Object.entries(m.bowlingCard || {})
+      .map(([id, p]) => `
+        <tr>
+          <td>${p.name}</td>
+          <td class="mono">${formatOvers(p.balls)}</td>
+          <td class="mono">${p.runs}</td>
+          <td class="mono">${p.wickets}</td>
+          <td class="mono">${economy(p.runs, p.balls)}</td>
+        </tr>`)
+      .join("");
+
+    el.innerHTML = `
+      <div class="panel">
+        <h2 style="margin:0 0 4px;">${battingName} — ${m.score.runs}/${m.score.wickets} (${formatOvers(m.score.balls)} ov)</h2>
+        <table>
+          <thead><tr><th>Batter</th><th>Dismissal</th><th>R</th><th>B</th><th>4s</th><th>6s</th><th>SR</th></tr></thead>
+          <tbody>${battingRows}</tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <h2 style="margin:0 0 4px;">Bowling — ${bowlingName}</h2>
+        <table>
+          <thead><tr><th>Bowler</th><th>O</th><th>R</th><th>W</th><th>Econ</th></tr></thead>
+          <tbody>${bowlingRows}</tbody>
+        </table>
+      </div>
+    `;
+  });
+</script>
+</body>
+</html>

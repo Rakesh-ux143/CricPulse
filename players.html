@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Players — Cricket Scorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Player Profiles</div>
+  <div id="playersRoot"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="assets/firebase-config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  renderNav("players.html");
+
+  db.ref("match").on("value", (snap) => {
+    const m = snap.val();
+    const el = document.getElementById("playersRoot");
+    if (!m || !m.teamA) {
+      el.innerHTML = `<div class="panel"><span class="tag">No players yet</span></div>`;
+      return;
+    }
+    const all = [
+      ...Object.entries(m.teamA.players || {}).map(([id, p]) => ({ id, ...p, team: m.teamA.name })),
+      ...Object.entries(m.teamB.players || {}).map(([id, p]) => ({ id, ...p, team: m.teamB.name })),
+    ];
+    el.innerHTML = `<div class="home-grid">` + all.map((p) => {
+      const bat = m.battingCard?.[p.id];
+      const bowl = m.bowlingCard?.[p.id];
+      return `<div class="card">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;">${p.name}</div>
+        <div class="muted" style="margin-bottom:6px;">${p.team}</div>
+        ${bat ? `<div class="mono muted">Bat: ${bat.runs} (${bat.balls}b)</div>` : ""}
+        ${bowl ? `<div class="mono muted">Bowl: ${bowl.wickets}-${bowl.runs} (${formatOvers(bowl.balls)} ov)</div>` : ""}
+        ${!bat && !bowl ? `<div class="muted mono">No stats this match yet</div>` : ""}
+      </div>`;
+    }).join("") + `</div>`;
+  });
+</script>
+</body>
+</html>
