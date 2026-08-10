@@ -1,112 +1,370 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CrickScore — Admin</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css">
-<style>
-:root{--panel:#101827;--line:#263246;--gold:#f4c95d}
-body{background:#080d16;color:#eef3f8}
-.admin-shell{max-width:1200px;margin:auto;padding:28px 18px}
-.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.tab{background:#111a29;border:1px solid var(--line);color:#dbe4ef;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}.tab.active{border-color:var(--gold);color:var(--gold)}
-.section{display:none}.section.active{display:block}.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
-@media(max-width:750px){.grid,.grid3{grid-template-columns:1fr}}
-label{display:block;font-size:12px;color:#8d9aaf;margin:0 0 5px}input,select,textarea{width:100%;box-sizing:border-box;background:#0a111e;border:1px solid var(--line);color:#f5f7fa;border-radius:7px;padding:10px;font:inherit}textarea{resize:vertical}
-.btn{border:1px solid var(--gold);background:#172131;color:#f4c95d;padding:10px 14px;border-radius:7px;font-weight:700;cursor:pointer}.btn.secondary{border-color:var(--line);color:#dbe4ef}.btn.danger{border-color:#8d3d3d;color:#ff9c9c}.btn.success{border-color:#367052;color:#9ce0ba}.btn:disabled{opacity:.45;cursor:not-allowed}
-.card{background:#0c1421;border:1px solid var(--line);border-radius:9px;padding:12px}.row{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}.tag{display:inline-block;padding:4px 8px;border-radius:5px;background:#172235;color:#aebbd0;font-size:11px}.muted{color:#8d9aaf}.danger-text{color:#ff9c9c}.gold{color:var(--gold)}.mono{font-family:"Roboto Mono",monospace}
-.player-row{display:grid;grid-template-columns:2fr 1fr 1fr 1.3fr 1fr auto;gap:7px;align-items:end;margin-bottom:8px}@media(max-width:900px){.player-row{grid-template-columns:1fr 1fr}}
-.list{display:grid;gap:8px}.small{font-size:12px}
-.score-buttons{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}.score-buttons .btn{min-height:46px}@media(max-width:700px){.score-buttons{grid-template-columns:repeat(4,1fr)}}
-.extra-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}@media(max-width:700px){.extra-buttons{grid-template-columns:repeat(2,1fr)}}
-.ball{display:inline-block;background:#172235;border:1px solid #263246;border-radius:5px;padding:5px 8px;margin:3px;font-family:"Roboto Mono",monospace}
-.login-wrap{min-height:80vh;display:grid;place-items:center}.login-box{max-width:420px;width:100%}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>CrickScore Admin</title>
+
+  <link rel="stylesheet" href="assets/style.css">
+
+  <style>
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 420px;
+      padding: 30px;
+      border-radius: 15px;
+      background: #101827;
+      border: 1px solid #263246;
+    }
+
+    .login-box h1 {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .login-box label {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .login-box input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      border: 1px solid #344056;
+      background: #080d16;
+      color: white;
+      font-size: 16px;
+    }
+
+    .login-box button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .error {
+      color: #ff7b7b;
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    .success {
+      color: #7ee2a8;
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    .admin-container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 25px;
+    }
+
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .admin-card {
+      background: #101827;
+      border: 1px solid #263246;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .admin-btn {
+      padding: 10px 15px;
+      border-radius: 7px;
+      border: 1px solid #f4c95d;
+      background: #172131;
+      color: #f4c95d;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .admin-btn.danger {
+      border-color: #ff7777;
+      color: #ff9999;
+    }
+
+    .team-item {
+      background: #0b1320;
+      padding: 15px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: 1px solid #263246;
+    }
+  </style>
 </head>
+
 <body>
-<div id="loginScreen" class="admin-shell login-wrap">
-  <div class="panel login-box">
-    <div class="eyebrow">CrickScore</div>
-    <h1>Admin Login</h1>
-    <p class="muted">Only authenticated admins can edit teams, schedules and live scores.</p>
+
+<!-- =========================================================
+     TOURNAMENT LOGIN
+========================================================= -->
+
+<div id="loginPage" class="login-container">
+
+  <div class="login-box">
+
+    <h1>🏏 CrickScore</h1>
+
+    <p style="text-align:center;">
+      Tournament Admin Access
+    </p>
+
     <form id="loginForm">
-      <div style="margin-bottom:10px"><label>Admin username / email</label><input id="loginEmail" type="email" required placeholder="admin@example.com"></div>
-      <div style="margin-bottom:10px"><label>Password</label><input id="loginPassword" type="password" required placeholder="Password"></div>
-      <button class="btn" style="width:100%">Sign in</button>
+
+      <label for="loginTournament">
+        Tournament Name
+      </label>
+
+      <input
+        id="loginTournament"
+        type="text"
+        placeholder="Example: RPL 2026"
+        required
+      >
+
+      <label for="loginPassword">
+        4-Digit Password
+      </label>
+
+      <input
+        id="loginPassword"
+        type="password"
+        inputmode="numeric"
+        maxlength="4"
+        pattern="[0-9]{4}"
+        placeholder="Example: 4826"
+        required
+      >
+
+      <button class="admin-btn" type="submit">
+        LOGIN
+      </button>
+
     </form>
-    <p id="loginMsg" class="danger-text small"></p>
-    <p class="muted small">Create the admin account in Firebase Authentication using Email/Password. Do not hard-code a password in this page.</p>
+
+    <p id="loginMessage"></p>
+
+    <hr style="margin:25px 0;border-color:#263246;">
+
+    <button
+      class="admin-btn"
+      onclick="showCreateTournament()"
+    >
+      + CREATE TOURNAMENT
+    </button>
+
   </div>
+
 </div>
 
-<div id="adminApp" class="admin-shell" style="display:none">
-  <div class="row">
-    <div><div class="eyebrow">CrickScore Admin</div><h1 style="margin:0">Control Center</h1><div class="muted">Teams · Schedule · Live Scoring · Tournament</div></div>
-    <div><span id="adminIdentity" class="tag"></span> <button id="logoutBtn" class="btn secondary">Logout</button></div>
+
+<!-- =========================================================
+     CREATE TOURNAMENT
+========================================================= -->
+
+<div
+  id="createTournamentPage"
+  class="login-container"
+  style="display:none;"
+>
+
+  <div class="login-box">
+
+    <h1>Create Tournament</h1>
+
+    <form id="createTournamentForm">
+
+      <label>
+        Tournament Name
+      </label>
+
+      <input
+        id="newTournamentName"
+        type="text"
+        placeholder="Example: RPL 2026"
+        required
+      >
+
+      <label>
+        Create 4-Digit Password
+      </label>
+
+      <input
+        id="newTournamentPassword"
+        type="password"
+        inputmode="numeric"
+        maxlength="4"
+        pattern="[0-9]{4}"
+        placeholder="Example: 4826"
+        required
+      >
+
+      <button
+        type="submit"
+        class="admin-btn"
+      >
+        CREATE TOURNAMENT
+      </button>
+
+    </form>
+
+    <p id="createMessage"></p>
+
+    <button
+      class="admin-btn"
+      onclick="showLogin()"
+    >
+      BACK TO LOGIN
+    </button>
+
   </div>
 
-  <div class="tabs">
-    <button class="tab active" data-tab="teams">Teams</button>
-    <button class="tab" data-tab="schedule">Schedule</button>
-    <button class="tab" data-tab="match">Match Setup</button>
-    <button class="tab" data-tab="scoring">Live Scoring</button>
-  </div>
-
-  <section id="section-teams" class="section active">
-    <div class="panel">
-      <div class="row"><div><h2>Add Team</h2><div class="muted small">Teams receive automatic labels Team 1, Team 2, Team 3…</div></div></div>
-      <form id="teamForm">
-        <div class="grid">
-          <div><label>Team name</label><input id="teamName" required placeholder="Bengaluru Strikers"></div>
-          <div><label>Short name</label><input id="teamShort" maxlength="5" placeholder="BS"></div>
-        </div>
-        <h3>Players</h3>
-        <div id="playersEditor"></div>
-        <button type="button" id="addPlayerBtn" class="btn secondary">+ Add Player</button>
-        <button type="submit" class="btn" style="margin-left:6px">Save Team</button>
-      </form>
-    </div>
-    <div class="panel"><h2>Saved Teams</h2><div id="teamList" class="list"></div></div>
-  </section>
-
-  <section id="section-schedule" class="section">
-    <div class="panel">
-      <h2>Create Schedule</h2>
-      <form id="scheduleForm">
-        <div class="grid grid3">
-          <div><label>Team 1</label><select id="schA" required></select></div>
-          <div><label>Team 2</label><select id="schB" required></select></div>
-          <div><label>Match type</label><select id="schType"><option>League</option><option>Qualifier</option><option>Eliminator</option><option>Semifinal</option><option>Final</option></select></div>
-          <div><label>Date & time</label><input id="schDate" type="datetime-local" required></div>
-          <div><label>Venue</label><input id="schVenue" placeholder="Ground"></div>
-          <div><label>Overs</label><input id="schOvers" type="number" min="1" max="100" value="20" required></div>
-        </div>
-        <button class="btn" style="margin-top:10px">Add Schedule</button>
-      </form>
-    </div>
-    <div class="panel"><h2>Schedules</h2><div id="scheduleList" class="list"></div></div>
-  </section>
-
-  <section id="section-match" class="section">
-    <div class="panel">
-      <h2>Match Setup</h2>
-      <div id="matchSetup"></div>
-    </div>
-  </section>
-
-  <section id="section-scoring" class="section">
-    <div id="scoringRoot"></div>
-  </section>
 </div>
+
+
+<!-- =========================================================
+     ADMIN PANEL
+========================================================= -->
+
+<div
+  id="adminPage"
+  class="admin-container"
+  style="display:none;"
+>
+
+  <div class="admin-header">
+
+    <div>
+      <h1>🏏 CrickScore Admin</h1>
+
+      <p>
+        Tournament:
+        <strong id="currentTournamentName"></strong>
+      </p>
+
+    </div>
+
+    <button
+      class="admin-btn danger"
+      onclick="logoutTournament()"
+    >
+      LOCK / LOGOUT
+    </button>
+
+  </div>
+
+
+  <!-- =====================================================
+       TEAM MANAGEMENT
+  ====================================================== -->
+
+  <div class="admin-card">
+
+    <h2>Teams</h2>
+
+    <form id="teamForm">
+
+      <label>Team Name</label>
+
+      <input
+        id="teamName"
+        type="text"
+        placeholder="Example: Bengaluru Strikers"
+        required
+      >
+
+      <label>Short Name</label>
+
+      <input
+        id="teamShort"
+        type="text"
+        maxlength="5"
+        placeholder="BS"
+      >
+
+      <br><br>
+
+      <button
+        type="submit"
+        class="admin-btn"
+      >
+        + ADD TEAM
+      </button>
+
+    </form>
+
+    <div id="teamsList"></div>
+
+  </div>
+
+
+  <!-- =====================================================
+       QUICK LINKS
+  ====================================================== -->
+
+  <div class="admin-card">
+
+    <h2>Tournament Management</h2>
+
+    <button
+      class="admin-btn"
+      onclick="window.location.href='schedule.html'"
+    >
+      📅 SCHEDULE
+    </button>
+
+    <button
+      class="admin-btn"
+      onclick="window.location.href='points-table.html'"
+    >
+      🏆 POINTS TABLE
+    </button>
+
+    <button
+      class="admin-btn"
+      onclick="window.location.href='live-score.html'"
+    >
+      📺 LIVE SCORE
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- =========================================================
+     FIREBASE
+========================================================= -->
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
 <script src="assets/firebase-config.js"></script>
-<script src="assets/app.js"></script>
+
 <script src="assets/admin.js"></script>
+
 </body>
 </html>
