@@ -1,16 +1,17 @@
-# CrickScore - Tournament Passkey Edition
-
-No Firebase Authentication is used. Tournament name acts as the login name and a 4-digit number is the password.
+# CrickPulse Final
 
 Flow:
-1. Open admin.html.
-2. Create a tournament and 4-digit passkey, or log in to an existing tournament.
-3. Correct credentials open index.html.
-4. Teams, schedules, scoring, scorecard and points are scoped to that tournament.
-5. The session is stored in sessionStorage, so closing the browser/tab requires login again.
+1. Website opens on Tournament Name/User ID + 4-digit Password.
+2. Login is enabled only when both fields are valid.
+3. Create Tournament creates the tournament and opens the dashboard.
+4. Reopening/returning requires Tournament Name + Password again.
+5. Teams, players, schedules and match data are automatically saved in Firebase.
+6. Live scoring supports runs, wides, no-balls, byes, leg-byes, wickets and revert.
+7. Wicket details include dismissal, caught-by/fielder and bowler.
+8. Scorecard marks the striker with * and shows the non-striker normally.
+9. Chasing display shows runs needed and balls remaining.
+10. Points table gives 2 points for a win and ranks by NRR.
 
-Replace the placeholders in assets/firebase-config.js with the Firebase config you already use. Enable Realtime Database. Do not create Firebase Authentication users.
-
-The scoring page includes 0/1/2/3/4/6, wide, no-ball, bye, leg-bye, wicket, ball area, shot type, commentary and revert. This starter version can be extended with full batsman/bowler/wicket-detail workflows.
-
-Security note: this is an application-level passkey gate. For a public production deployment, enforce write access with Firebase Realtime Database Security Rules/backend authorization too.
+IMPORTANT:
+Keep your existing working assets/firebase-config.js. Replace the placeholder values in this package with your existing Firebase config before deployment.
+For production/public use, protect Firebase Realtime Database with proper Security Rules/server-side authorization. The tournament password in this client-side demo is an application gate, not a secure authentication system.

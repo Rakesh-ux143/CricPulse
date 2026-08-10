@@ -1,8 +1,71 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CrickScore Access</title><link rel="stylesheet" href="assets/style.css"></head><body>
-<div id="login" class="login-wrap"><div class="login-box"><h1>🏏 CrickScore</h1><p class="muted">Enter tournament name and 4-digit password.</p><form id="lf"><label>Tournament Name</label><input id="ln" required placeholder="RGPL 2026"><label>4-Digit Password</label><input id="lp" required type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="4826"><button class="btn" style="width:100%">LOGIN</button></form><p id="lm"></p><button class="btn success" style="width:100%" onclick="showCreate()">＋ CREATE TOURNAMENT</button></div></div>
-<div id="create" class="login-wrap hidden"><div class="login-box"><h1>🏆 Create Tournament</h1><form id="cf"><label>Tournament Name</label><input id="cn" required placeholder="RGPL 2026"><label>Create 4-Digit Password</label><input id="cp" required type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="4826"><button class="btn success" style="width:100%">CREATE TOURNAMENT</button></form><p id="cm"></p><button class="btn" style="width:100%" onclick="showLogin()">BACK TO LOGIN</button></div></div>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script><script src="assets/firebase-config.js"></script><script src="assets/tournament-auth.js"></script><script>
-const $=id=>document.getElementById(id);function showCreate(){$('login').classList.add('hidden');$('create').classList.remove('hidden')}function showLogin(){$('create').classList.add('hidden');$('login').classList.remove('hidden')}window.showCreate=showCreate;window.showLogin=showLogin;
-$('lf').onsubmit=async e=>{e.preventDefault();const n=$('ln').value.trim(),p=$('lp').value.trim();if(!/^\d{4}$/.test(p))return $('lm').textContent='Password must be exactly 4 numbers.';try{const all=(await db.ref('tournaments').once('value')).val()||{};const x=Object.entries(all).find(([id,t])=>t&&String(t.name).toLowerCase()===n.toLowerCase());if(!x)return $('lm').textContent='Tournament not found.';const [id,t]=x;if(String(t.password)!==p)return $('lm').textContent='Incorrect tournament password.';saveTournamentSession({...t,id});location.replace('index.html')}catch(err){console.error(err);$('lm').textContent='Firebase connection error.'}};
-$('cf').onsubmit=async e=>{e.preventDefault();const n=$('cn').value.trim(),p=$('cp').value.trim();if(!/^\d{4}$/.test(p))return $('cm').textContent='Password must be exactly 4 numbers.';try{const all=(await db.ref('tournaments').once('value')).val()||{};if(Object.values(all).some(t=>t&&String(t.name).toLowerCase()===n.toLowerCase()))return $('cm').textContent='Tournament already exists.';const id=Date.now().toString(36)+Math.random().toString(36).slice(2,7),t={id,name:n,password:p,createdAt:Date.now(),teams:{},schedules:{},matches:{},pointsTable:{}};await db.ref('tournaments/'+id).set(t);saveTournamentSession(t);location.replace('index.html')}catch(err){console.error(err);$('cm').textContent='Could not create tournament.'}};
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CrickPulse Login</title><link rel="stylesheet" href="assets/style.css"></head>
+<body>
+<div id="loginView" class="login-wrap"><div class="login-box">
+<h1>🏏 CrickPulse</h1>
+<p class="muted">Enter the tournament name/User ID and 4-digit password.</p>
+<label>Tournament Name / User ID</label><input id="loginName" autocomplete="username" placeholder="Example: RPL 2026">
+<label>Password</label><input id="loginPass" type="password" inputmode="numeric" maxlength="4" autocomplete="current-password" placeholder="4 digits">
+<button id="loginBtn" class="btn" style="width:100%" disabled>LOGIN</button>
+<button id="createBtn" class="btn success" style="width:100%;margin-top:9px" disabled>＋ CREATE TOURNAMENT</button>
+<p id="loginMsg"></p>
+</div></div>
+
+<div id="createView" class="login-wrap hidden"><div class="login-box">
+<h1>🏆 Create Tournament</h1>
+<p class="muted">Tournament name is the User ID. Use a 4-digit password.</p>
+<label>Tournament Name / User ID</label><input id="newName" placeholder="Example: RPL 2026">
+<label>Create 4-Digit Password</label><input id="newPass" type="password" inputmode="numeric" maxlength="4" placeholder="4826">
+<button id="makeBtn" class="btn success" style="width:100%" disabled>CREATE & OPEN DASHBOARD</button>
+<button class="btn" style="width:100%;margin-top:9px" id="backBtn">BACK TO LOGIN</button>
+<p id="createMsg"></p>
+</div></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="assets/firebase-config.js"></script>
+<script src="assets/tournament-auth.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+function valid(n,p){return n.trim().length>0 && /^\\d{4}$/.test(p)}
+function updateLogin(){ $("loginBtn").disabled=!valid($("loginName").value,$("loginPass").value); $("createBtn").disabled=!valid($("loginName").value,$("loginPass").value); }
+function updateCreate(){ $("makeBtn").disabled=!valid($("newName").value,$("newPass").value); }
+["loginName","loginPass"].forEach(id=>$(id).addEventListener("input",updateLogin));
+["newName","newPass"].forEach(id=>$(id).addEventListener("input",updateCreate));
+
+$("createBtn").onclick=()=>{
+  $("newName").value=$("loginName").value.trim();
+  $("newPass").value=$("loginPass").value.trim();
+  $("loginView").classList.add("hidden"); $("createView").classList.remove("hidden"); updateCreate();
+};
+$("backBtn").onclick=()=>{ $("createView").classList.add("hidden"); $("loginView").classList.remove("hidden"); updateLogin(); };
+
+$("loginBtn").onclick=async()=>{
+  $("loginMsg").textContent="Checking...";
+  try{
+    const snap=await db.ref("tournaments").once("value"), all=snap.val()||{};
+    const name=$("loginName").value.trim(), pass=$("loginPass").value.trim();
+    const found=Object.entries(all).find(([id,t])=>t && String(t.name).toLowerCase()===name.toLowerCase());
+    if(!found){$("loginMsg").className="error";$("loginMsg").textContent="Tournament/User ID not found.";return;}
+    const [id,t]=found;
+    if(String(t.password)!==pass){$("loginMsg").className="error";$("loginMsg").textContent="Incorrect password.";return;}
+    setTournamentSession({id,name:t.name}); window.location.replace("index.html");
+  }catch(e){console.error(e);$("loginMsg").className="error";$("loginMsg").textContent="Firebase connection failed.";}
+};
+
+$("makeBtn").onclick=async()=>{
+  $("createMsg").textContent="Creating...";
+  const name=$("newName").value.trim(), pass=$("newPass").value.trim();
+  try{
+    const snap=await db.ref("tournaments").once("value"),all=snap.val()||{};
+    if(Object.values(all).some(t=>t && String(t.name).toLowerCase()===name.toLowerCase())){
+      $("createMsg").className="error";$("createMsg").textContent="Tournament already exists. Use LOGIN.";return;
+    }
+    const id=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+    const tournament={id,name,password:pass,createdAt:Date.now(),teams:{},schedules:{},matches:{}};
+    await db.ref("tournaments/"+id).set(tournament);
+    setTournamentSession({id,name}); window.location.replace("index.html");
+  }catch(e){console.error(e);$("createMsg").className="error";$("createMsg").textContent="Tournament could not be created.";}
+};
 </script></body></html>
