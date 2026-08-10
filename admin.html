@@ -1,111 +1,61 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CrickPulse Login</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrickPulse</title>
+
   <link rel="stylesheet" href="assets/style.css">
 </head>
 
 <body>
 
-<div id="loginView" class="login-wrap">
+<div class="login-wrap">
   <div class="login-box">
 
     <h1>🏏 CrickPulse</h1>
 
     <p class="muted">
-      Enter the tournament name/User ID and 4-digit password.
+      Enter tournament name/User ID and 4-digit password.
     </p>
 
-    <label>Tournament Name / User ID</label>
+    <label for="name">Tournament Name / User ID</label>
+
     <input
-      id="loginName"
-      autocomplete="username"
+      id="name"
+      type="text"
       placeholder="Example: RPL 2026"
+      autocomplete="off"
     >
 
-    <label>Password</label>
+    <label for="password">Password</label>
+
     <input
-      id="loginPass"
+      id="password"
       type="password"
-      inputmode="numeric"
+      placeholder="4-digit password"
       maxlength="4"
-      autocomplete="current-password"
-      placeholder="4 digits"
+      inputmode="numeric"
+      autocomplete="off"
     >
 
-    <!-- LOGIN is enabled only after valid credentials are entered -->
+    <button
+      id="createBtn"
+      class="btn success"
+      disabled
+    >
+      ＋ CREATE TOURNAMENT
+    </button>
+
     <button
       id="loginBtn"
       class="btn"
-      style="width:100%"
       disabled
     >
       LOGIN
     </button>
 
-    <!-- CREATE TOURNAMENT is ALWAYS enabled -->
-    <button
-      id="createBtn"
-      class="btn success"
-      style="width:100%;margin-top:9px"
-    >
-      ＋ CREATE TOURNAMENT
-    </button>
-
-    <p id="loginMsg"></p>
-
-  </div>
-</div>
-
-
-<!-- CREATE TOURNAMENT PAGE -->
-
-<div id="createView" class="login-wrap hidden">
-  <div class="login-box">
-
-    <h1>🏆 Create Tournament</h1>
-
-    <p class="muted">
-      Tournament name is the User ID. Use a 4-digit password.
-    </p>
-
-    <label>Tournament Name / User ID</label>
-
-    <input
-      id="newName"
-      placeholder="Example: RPL 2026"
-    >
-
-    <label>Create 4-Digit Password</label>
-
-    <input
-      id="newPass"
-      type="password"
-      inputmode="numeric"
-      maxlength="4"
-      placeholder="4826"
-    >
-
-    <button
-      id="makeBtn"
-      class="btn success"
-      style="width:100%"
-      disabled
-    >
-      CREATE & OPEN DASHBOARD
-    </button>
-
-    <button
-      class="btn"
-      style="width:100%;margin-top:9px"
-      id="backBtn"
-    >
-      BACK TO LOGIN
-    </button>
-
-    <p id="createMsg"></p>
+    <p id="message"></p>
 
   </div>
 </div>
@@ -119,351 +69,306 @@
 
 <script src="assets/firebase-config.js"></script>
 
-<script src="assets/tournament-auth.js"></script>
-
 
 <script>
 
-const $ = id => document.getElementById(id);
+const nameInput = document.getElementById("name");
+const passwordInput = document.getElementById("password");
+
+const createBtn = document.getElementById("createBtn");
+const loginBtn = document.getElementById("loginBtn");
+
+const message = document.getElementById("message");
 
 
-/* -----------------------------
-   VALIDATION
------------------------------ */
+/* ----------------------------------
+   VALIDATE INPUT
+---------------------------------- */
 
-function valid(name, password) {
+function validInput() {
+
+  const name = nameInput.value.trim();
+  const password = passwordInput.value.trim();
 
   return (
-    name.trim().length > 0 &&
-    /^\d{4}$/.test(password)
+    name.length > 0 &&
+    /^[0-9]{4}$/.test(password)
+  );
+}
+
+
+/* ----------------------------------
+   ENABLE / DISABLE BUTTONS
+---------------------------------- */
+
+function updateButtons() {
+
+  const valid = validInput();
+
+  createBtn.disabled = !valid;
+  loginBtn.disabled = !valid;
+}
+
+
+nameInput.addEventListener("input", updateButtons);
+passwordInput.addEventListener("input", updateButtons);
+
+
+/* ----------------------------------
+   SAVE SESSION
+---------------------------------- */
+
+function openDashboard(id, name) {
+
+  sessionStorage.setItem(
+    "crickpulseTournament",
+    JSON.stringify({
+      id: id,
+      name: name
+    })
   );
 
-}
-
-
-/* -----------------------------
-   LOGIN BUTTON
------------------------------ */
-
-function updateLogin() {
-
-  const name = $("loginName").value;
-  const password = $("loginPass").value;
-
-  $("loginBtn").disabled = !valid(name, password);
-
-}
-
-
-/* -----------------------------
-   CREATE TOURNAMENT BUTTON
------------------------------ */
-
-function updateCreate() {
-
-  const name = $("newName").value;
-  const password = $("newPass").value;
-
-  $("makeBtn").disabled = !valid(name, password);
-
-}
-
-
-/* -----------------------------
-   INPUT EVENTS
------------------------------ */
-
-$("loginName").addEventListener(
-  "input",
-  updateLogin
-);
-
-$("loginPass").addEventListener(
-  "input",
-  updateLogin
-);
-
-$("newName").addEventListener(
-  "input",
-  updateCreate
-);
-
-$("newPass").addEventListener(
-  "input",
-  updateCreate
-);
-
-
-/* -----------------------------
-   OPEN CREATE TOURNAMENT
------------------------------ */
-
-$("createBtn").onclick = () => {
-
   /*
-    If user already typed something
-    in the login page, copy it.
+    Open dashboard.
   */
 
-  $("newName").value =
-    $("loginName").value.trim();
-
-  $("newPass").value =
-    $("loginPass").value.trim();
-
-  $("loginView").classList.add("hidden");
-
-  $("createView").classList.remove("hidden");
-
-  updateCreate();
-
-};
+  window.location.href = "index.html";
+}
 
 
-/* -----------------------------
-   BACK TO LOGIN
------------------------------ */
-
-$("backBtn").onclick = () => {
-
-  $("createView").classList.add("hidden");
-
-  $("loginView").classList.remove("hidden");
-
-  updateLogin();
-
-};
-
-
-/* -----------------------------
-   LOGIN
------------------------------ */
-
-$("loginBtn").onclick = async () => {
-
-  $("loginMsg").className = "";
-  $("loginMsg").textContent = "Checking...";
-
-  try {
-
-    const snap =
-      await db.ref("tournaments").once("value");
-
-    const all =
-      snap.val() || {};
-
-    const name =
-      $("loginName").value.trim();
-
-    const pass =
-      $("loginPass").value.trim();
-
-
-    /*
-      Find tournament by name.
-    */
-
-    const found =
-      Object.entries(all).find(
-        ([id, tournament]) =>
-          tournament &&
-          String(tournament.name).toLowerCase() ===
-          name.toLowerCase()
-      );
-
-
-    if (!found) {
-
-      $("loginMsg").className = "error";
-
-      $("loginMsg").textContent =
-        "Tournament/User ID not found.";
-
-      return;
-    }
-
-
-    const [id, tournament] = found;
-
-
-    /*
-      Check password.
-    */
-
-    if (String(tournament.password) !== pass) {
-
-      $("loginMsg").className = "error";
-
-      $("loginMsg").textContent =
-        "Incorrect password.";
-
-      return;
-    }
-
-
-    /*
-      Save tournament session.
-    */
-
-    setTournamentSession({
-      id: id,
-      name: tournament.name
-    });
-
-
-    /*
-      Open dashboard.
-    */
-
-    window.location.replace("index.html");
-
-  }
-
-  catch (error) {
-
-    console.error(error);
-
-    $("loginMsg").className = "error";
-
-    $("loginMsg").textContent =
-      "Firebase connection failed.";
-
-  }
-
-};
-
-
-/* -----------------------------
+/* ----------------------------------
    CREATE TOURNAMENT
------------------------------ */
+---------------------------------- */
 
-$("makeBtn").onclick = async () => {
+createBtn.addEventListener("click", async function () {
 
-  $("createMsg").className = "";
+  const name = nameInput.value.trim();
+  const password = passwordInput.value.trim();
 
-  $("createMsg").textContent =
-    "Creating tournament...";
+  message.className = "";
+  message.textContent = "Creating tournament...";
 
-
-  const name =
-    $("newName").value.trim();
-
-  const pass =
-    $("newPass").value.trim();
-
+  createBtn.disabled = true;
+  loginBtn.disabled = true;
 
   try {
 
-    /*
-      Get existing tournaments.
-    */
-
-    const snap =
+    const snapshot =
       await db.ref("tournaments").once("value");
 
-    const all =
-      snap.val() || {};
+    const tournaments =
+      snapshot.val() || {};
 
 
-    /*
-      Check duplicate tournament name.
-    */
+    /* Check duplicate name */
 
-    const exists =
-      Object.values(all).some(
-        tournament =>
+    const duplicate =
+      Object.values(tournaments).some(tournament => {
+
+        return (
           tournament &&
           String(tournament.name).toLowerCase() ===
           name.toLowerCase()
-      );
+        );
+
+      });
 
 
-    if (exists) {
+    if (duplicate) {
 
-      $("createMsg").className = "error";
+      message.className = "error";
 
-      $("createMsg").textContent =
-        "Tournament already exists. Use LOGIN.";
+      message.textContent =
+        "This tournament already exists. Please use LOGIN.";
+
+      updateButtons();
 
       return;
     }
 
 
-    /*
-      Generate tournament ID.
-    */
+    /* Generate unique ID */
 
-    const id =
+    const tournamentId =
+      "t_" +
       Date.now().toString(36) +
-      Math.random().toString(36).slice(2, 7);
+      Math.random().toString(36).substring(2, 8);
 
 
-    /*
-      Create tournament database structure.
-    */
+    /* Tournament data */
 
-    const tournament = {
+    const tournamentData = {
 
-      id: id,
+      id: tournamentId,
 
       name: name,
 
-      password: pass,
+      password: password,
 
       createdAt: Date.now(),
 
       teams: {},
 
+      players: {},
+
       schedules: {},
 
       matches: {},
-
-      players: {},
 
       pointsTable: {}
 
     };
 
 
-    /*
-      Save to Firebase.
-    */
+    /* Save tournament */
 
     await db
-      .ref("tournaments/" + id)
-      .set(tournament);
+      .ref("tournaments/" + tournamentId)
+      .set(tournamentData);
+
+
+    message.textContent =
+      "Tournament created successfully. Opening dashboard...";
 
 
     /*
-      Save login session.
+      Save session and open dashboard.
     */
 
-    setTournamentSession({
-      id: id,
-      name: name
-    });
-
-
-    /*
-      Open dashboard automatically.
-    */
-
-    window.location.replace("index.html");
+    openDashboard(tournamentId, name);
 
   }
 
   catch (error) {
 
-    console.error(error);
+    console.error("CREATE ERROR:", error);
 
-    $("createMsg").className = "error";
+    message.className = "error";
 
-    $("createMsg").textContent =
-      "Tournament could not be created.";
+    message.textContent =
+      "Unable to create tournament. Check Firebase configuration/rules.";
+
+    updateButtons();
+  }
+
+});
+
+
+/* ----------------------------------
+   LOGIN TO EXISTING TOURNAMENT
+---------------------------------- */
+
+loginBtn.addEventListener("click", async function () {
+
+  const name = nameInput.value.trim();
+  const password = passwordInput.value.trim();
+
+  message.className = "";
+  message.textContent = "Checking tournament...";
+
+  createBtn.disabled = true;
+  loginBtn.disabled = true;
+
+  try {
+
+    const snapshot =
+      await db.ref("tournaments").once("value");
+
+    const tournaments =
+      snapshot.val() || {};
+
+
+    let foundTournament = null;
+
+
+    for (const [id, tournament] of Object.entries(tournaments)) {
+
+      if (!tournament) {
+        continue;
+      }
+
+
+      const tournamentName =
+        String(tournament.name || "").trim();
+
+
+      const tournamentPassword =
+        String(tournament.password || "").trim();
+
+
+      if (
+        tournamentName.toLowerCase() ===
+        name.toLowerCase()
+      ) {
+
+        if (tournamentPassword === password) {
+
+          foundTournament = {
+            id: id,
+            name: tournamentName
+          };
+
+        }
+
+        break;
+      }
+    }
+
+
+    /* Tournament not found */
+
+    if (!foundTournament) {
+
+      message.className = "error";
+
+      message.textContent =
+        "Tournament name or password is incorrect.";
+
+      updateButtons();
+
+      return;
+    }
+
+
+    /*
+      Correct login.
+      Save session.
+    */
+
+    sessionStorage.setItem(
+      "crickpulseTournament",
+      JSON.stringify(foundTournament)
+    );
+
+
+    message.textContent =
+      "Login successful. Opening dashboard...";
+
+
+    /* Open dashboard */
+
+    window.location.href = "index.html";
 
   }
 
-};
+  catch (error) {
+
+    console.error("LOGIN ERROR:", error);
+
+    message.className = "error";
+
+    message.textContent =
+      "Firebase connection failed.";
+
+    updateButtons();
+  }
+
+});
+
+
+/* Initial state */
+
+updateButtons();
 
 </script>
 
