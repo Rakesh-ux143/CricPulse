@@ -1,24 +1,48 @@
 const CRICPULSE_SESSION = "cricpulseTournament";
 function getTournamentSession() {
-  try { return JSON.parse(sessionStorage.getItem(CRICPULSE_SESSION) || "null"); }
-  catch { sessionStorage.removeItem(CRICPULSE_SESSION); return null; }
+
+    const data =
+        sessionStorage.getItem("crickpulseTournament");
+
+    if (!data) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(data);
+    } catch (error) {
+        sessionStorage.removeItem(
+            "crickpulseTournament"
+        );
+
+        return null;
+    }
 }
-function setTournamentSession(t) {
-  sessionStorage.setItem(CRICPULSE_SESSION, JSON.stringify({
-    id: t.id, name: t.name, loginAt: Date.now()
-  }));
+
+
+function requireTournament() {
+
+    const tournament =
+        getTournamentSession();
+
+    if (!tournament) {
+
+        window.location.replace("admin.html");
+
+        return null;
+    }
+
+    return tournament;
 }
-function clearTournamentSession() { sessionStorage.removeItem(CRICPULSE_SESSION); }
-function requireTournamentLogin() {
-  if (!getTournamentSession()) {
-    window.location.replace("admin.html");
-    return false;
-  }
-  return true;
-}
+
+
 function logoutTournament() {
-  clearTournamentSession();
-  window.location.replace("admin.html");
+
+    sessionStorage.removeItem(
+        "crickpulseTournament"
+    );
+
+    window.location.replace("admin.html");
 }
 function esc(v) {
   return String(v ?? "").replace(/[&<>"']/g, c => ({
