@@ -5,14 +5,16 @@
 //    as long as you set proper Realtime Database security rules (see README.md).
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDcrdmFMTKfZPfc9ghK0Hwxr6DCQ3ih3h0",
+  authDomain: "cricpulse-72c4f.firebaseapp.com",
+  databaseURL: "https://cricpulse-72c4f-default-rtdb.firebaseio.com",
+  projectId: "cricpulse-72c4f",
+  storageBucket: "cricpulse-72c4f.firebasestorage.app",
+  messagingSenderId: "31225134918",
+  appId: "1:31225134918:web:3c6307bfbaf2faf3f92f47",
+  measurementId: "G-MZC6M9M8SS"
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.database();
