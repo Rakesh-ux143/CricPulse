@@ -1,15 +1,748 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Points Table</title><link rel="stylesheet" href="assets/style.css"></head><body>
-<script src="assets/tournament-auth.js"></script><script>requireTournamentLogin()</script>
-<header class="topbar"><div class="brand">🏆 Points Table</div><nav class="nav"><a class="btn" href="index.html">Dashboard</a><a class="btn" href="schedule.html">Schedule</a><a class="btn" href="live-score.html">Live Score</a><button class="btn danger" onclick="logoutTournament()">🔒 Logout</button></nav></header>
-<main class="container"><div class="card"><h2>League Points</h2><p class="muted">Win = 2 points. Ranking uses points first, then Net Run Rate.</p><div class="table-wrap"><table><thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>L</th><th>T</th><th>NRR</th><th>Pts</th></tr></thead><tbody id="rows"></tbody></table></div></div></main>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script><script src="assets/firebase-config.js"></script>
+<!doctype html>
+<html>
+
+<head>
+
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1">
+
+  <title>Points Table</title>
+
+  <link
+    rel="stylesheet"
+    href="assets/style.css">
+
+</head>
+
+
+<body>
+
+<script src="assets/tournament-auth.js"></script>
+
 <script>
-const S=getTournamentSession(),base="tournaments/"+S.id;
-function oversToDecimal(v){if(!v)return 0;const [o,b]=String(v).split(".");return Number(o||0)+(Number(b||0)/6);}
-async function load(){const [ts,ms]=await Promise.all([db.ref(base+"/teams").once("value"),db.ref(base+"/matches").once("value")]),teams=ts.val()||{},matches=ms.val()||{},r={};Object.entries(teams).forEach(([id,t])=>r[id]={name:t.name,p:0,w:0,l:0,t:0,pts:0,rf:0,ra:0,of:0,oa:0});
-Object.values(matches).filter(m=>m.status==="Completed").forEach(m=>{const a=r[m.team1Id],b=r[m.team2Id];if(!a||!b)return;a.p++;b.p++;a.rf+=Number(m.team1Runs||0);b.rf+=Number(m.team2Runs||0);a.ra+=Number(m.team2Runs||0);b.ra+=Number(m.team1Runs||0);a.of+=oversToDecimal(m.team1Overs);b.of+=oversToDecimal(m.team2Overs);a.oa+=oversToDecimal(m.team2Overs);b.oa+=oversToDecimal(m.team1Overs);if(m.winnerId===m.team1Id){a.w++;b.l++;a.pts+=2}else if(m.winnerId===m.team2Id){b.w++;a.l++;b.pts+=2}else{a.t++;b.t++;}});
-const arr=Object.values(r).map(x=>({...x,nrr:(x.of&&x.oa)?(x.rf/x.of-x.ra/x.oa):0})).sort((a,b)=>b.pts-a.pts||b.nrr-a.nrr);
-rows.innerHTML=arr.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.name)}</td><td>${x.p}</td><td>${x.w}</td><td>${x.l}</td><td>${x.t}</td><td>${x.nrr.toFixed(3)}</td><td><b>${x.pts}</b></td></tr>`).join("")||'<tr><td colspan="8">No completed league matches yet.</td></tr>';}
+  requireTournamentLogin();
+</script>
+
+
+<header class="topbar">
+
+  <div class="brand">
+    🏆 Points Table
+  </div>
+
+
+  <nav class="nav">
+
+    <a class="btn" href="index.html">
+      Dashboard
+    </a>
+
+    <a class="btn" href="schedule.html">
+      Schedule
+    </a>
+
+    <a class="btn" href="live-score.html">
+      Live Score
+    </a>
+
+    <a class="btn" href="scorecard.html">
+      Scorecard
+    </a>
+
+    <button
+      class="btn danger"
+      onclick="logoutTournament()">
+      🔒 Logout
+    </button>
+
+  </nav>
+
+</header>
+
+
+<main class="container">
+
+  <div class="card">
+
+    <h2>
+      League Points
+    </h2>
+
+    <p class="muted">
+      Win = 2 points, Tie = 1 point.
+      Ranking uses Points first, then ICC-style Net Run Rate.
+    </p>
+
+
+    <div class="table-wrap">
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th>#</th>
+            <th>Team</th>
+            <th>P</th>
+            <th>W</th>
+            <th>L</th>
+            <th>T</th>
+            <th>NRR</th>
+            <th>Pts</th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody id="rows"></tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</main>
+
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<script src="assets/firebase-config.js"></script>
+
+
+<script>
+
+// ----------------------------------------------------
+// TOURNAMENT
+// ----------------------------------------------------
+
+const S =
+  getTournamentSession();
+
+const base =
+  "tournaments/" + S.id;
+
+
+// ----------------------------------------------------
+// OVER CONVERSION
+// ----------------------------------------------------
+
+function ballsToOvers(balls) {
+
+  balls =
+    Number(balls || 0);
+
+  const overs =
+    Math.floor(balls / 6);
+
+  const remainingBalls =
+    balls % 6;
+
+
+  return (
+    overs +
+    remainingBalls / 6
+  );
+
+}
+
+
+// ----------------------------------------------------
+// ICC NRR OVERS
+// ----------------------------------------------------
+
+function inningsOvers(
+  innings,
+  matchOvers
+) {
+
+  if (!innings) {
+    return 0;
+  }
+
+
+  const balls =
+    Number(
+      innings.legalBalls || 0
+    );
+
+
+  const wickets =
+    Number(
+      innings.wickets || 0
+    );
+
+
+  const totalPlayers =
+    11;
+
+
+  const allOut =
+    wickets >=
+    totalPlayers - 1;
+
+
+  /*
+   * ICC-style NRR:
+   *
+   * If a team is all out before
+   * the allotted overs, its innings
+   * is treated as having used the
+   * full allotted overs.
+   */
+
+
+  if (allOut) {
+
+    return Number(
+      matchOvers || 20
+    );
+
+  }
+
+
+  return ballsToOvers(balls);
+
+}
+
+
+// ----------------------------------------------------
+// LOAD
+// ----------------------------------------------------
+
+async function load() {
+
+  const [
+    teamsSnapshot,
+    matchesSnapshot
+  ] = await Promise.all([
+
+    db
+      .ref(base + "/teams")
+      .once("value"),
+
+    db
+      .ref(base + "/matches")
+      .once("value")
+
+  ]);
+
+
+  const teams =
+    teamsSnapshot.val() || {};
+
+
+  const matches =
+    matchesSnapshot.val() || {};
+
+
+  const table = {};
+
+
+  // --------------------------------------------------
+  // INITIAL TEAM DATA
+  // --------------------------------------------------
+
+  Object.entries(teams)
+    .forEach(([id, t]) => {
+
+      table[id] = {
+
+        id: id,
+
+        name:
+          t.name || "Unknown",
+
+        p: 0,
+
+        w: 0,
+
+        l: 0,
+
+        t: 0,
+
+        pts: 0,
+
+        runsFor: 0,
+
+        runsAgainst: 0,
+
+        oversFor: 0,
+
+        oversAgainst: 0
+
+      };
+
+    });
+
+
+  // --------------------------------------------------
+  // COMPLETED MATCHES ONLY
+  // --------------------------------------------------
+
+  Object.values(matches)
+
+    .filter(
+      m =>
+        m.status === "Completed"
+    )
+
+    .forEach(m => {
+
+      const team1 =
+        table[m.team1Id];
+
+      const team2 =
+        table[m.team2Id];
+
+
+      if (!team1 || !team2) {
+        return;
+      }
+
+
+      // ----------------------------------------------
+      // DO NOT COUNT SAME MATCH TWICE
+      // ----------------------------------------------
+
+      if (
+        m.pointsApplied === true
+      ) {
+
+        /*
+         * We normally don't need this because
+         * the table is calculated from scratch.
+         *
+         * It is kept here only as a safety check
+         * for malformed duplicate records.
+         */
+
+      }
+
+
+      team1.p++;
+      team2.p++;
+
+
+      // ----------------------------------------------
+      // GET INNINGS DATA
+      // ----------------------------------------------
+
+      const innings =
+        m.inningsResults || {};
+
+
+      const i1 =
+        innings[m.team1Id];
+
+
+      const i2 =
+        innings[m.team2Id];
+
+
+      /*
+       * Fallback to stored match fields.
+       * This keeps old completed matches from
+       * completely breaking the table.
+       */
+
+      const team1Runs =
+        i1
+          ? Number(i1.runs || 0)
+          : Number(m.team1Runs || 0);
+
+
+      const team2Runs =
+        i2
+          ? Number(i2.runs || 0)
+          : Number(m.team2Runs || 0);
+
+
+      // ----------------------------------------------
+      // OVERS
+      // ----------------------------------------------
+
+      let team1Overs;
+      let team2Overs;
+
+
+      if (i1) {
+
+        team1Overs =
+          inningsOvers(
+            i1,
+            m.overs
+          );
+
+      }
+
+      else {
+
+        team1Overs =
+          fallbackOvers(
+            m.team1Overs,
+            m.team1LegalBalls,
+            m.overs,
+            m.team1Wickets
+          );
+
+      }
+
+
+      if (i2) {
+
+        team2Overs =
+          inningsOvers(
+            i2,
+            m.overs
+          );
+
+      }
+
+      else {
+
+        team2Overs =
+          fallbackOvers(
+            m.team2Overs,
+            m.team2LegalBalls,
+            m.overs,
+            m.team2Wickets
+          );
+
+      }
+
+
+      // ----------------------------------------------
+      // RUNS FOR / AGAINST
+      // ----------------------------------------------
+
+      team1.runsFor +=
+        team1Runs;
+
+      team1.runsAgainst +=
+        team2Runs;
+
+      team1.oversFor +=
+        team1Overs;
+
+      team1.oversAgainst +=
+        team2Overs;
+
+
+      team2.runsFor +=
+        team2Runs;
+
+      team2.runsAgainst +=
+        team1Runs;
+
+      team2.oversFor +=
+        team2Overs;
+
+      team2.oversAgainst +=
+        team1Overs;
+
+
+      // ----------------------------------------------
+      // RESULT
+      // ----------------------------------------------
+
+      if (
+        m.resultType === "tie"
+      ) {
+
+        team1.t++;
+        team2.t++;
+
+        // Standard league scoring:
+        // 1 point each for a tie.
+
+        team1.pts += 1;
+        team2.pts += 1;
+
+      }
+
+      else if (
+        m.winnerId === m.team1Id
+      ) {
+
+        team1.w++;
+        team2.l++;
+
+        team1.pts += 2;
+
+      }
+
+      else if (
+        m.winnerId === m.team2Id
+      ) {
+
+        team2.w++;
+        team1.l++;
+
+        team2.pts += 2;
+
+      }
+
+    });
+
+
+  // --------------------------------------------------
+  // CALCULATE NRR
+  // --------------------------------------------------
+
+  const arr =
+    Object.values(table)
+      .map(team => {
+
+        const scoringRate =
+          team.oversFor > 0
+            ? team.runsFor /
+              team.oversFor
+            : 0;
+
+
+        const concedingRate =
+          team.oversAgainst > 0
+            ? team.runsAgainst /
+              team.oversAgainst
+            : 0;
+
+
+        const nrr =
+          scoringRate -
+          concedingRate;
+
+
+        return {
+
+          ...team,
+
+          nrr: nrr
+
+        };
+
+      });
+
+
+  // --------------------------------------------------
+  // RANKING
+  // --------------------------------------------------
+
+  arr.sort((a, b) => {
+
+    // 1. Points
+
+    if (b.pts !== a.pts) {
+
+      return b.pts - a.pts;
+
+    }
+
+
+    // 2. NRR
+
+    if (
+      Math.abs(b.nrr - a.nrr) >
+      0.0000001
+    ) {
+
+      return b.nrr - a.nrr;
+
+    }
+
+
+    // 3. Wins as additional tie breaker
+
+    if (b.w !== a.w) {
+
+      return b.w - a.w;
+
+    }
+
+
+    // 4. Team name
+
+    return a.name.localeCompare(
+      b.name
+    );
+
+  });
+
+
+  // --------------------------------------------------
+  // DISPLAY
+  // --------------------------------------------------
+
+  rows.innerHTML =
+    arr
+      .map((x, i) => {
+
+        return `
+
+          <tr>
+
+            <td>
+              ${i + 1}
+            </td>
+
+            <td>
+              ${esc(x.name)}
+            </td>
+
+            <td>
+              ${x.p}
+            </td>
+
+            <td>
+              ${x.w}
+            </td>
+
+            <td>
+              ${x.l}
+            </td>
+
+            <td>
+              ${x.t}
+            </td>
+
+            <td>
+              ${formatNRR(x.nrr)}
+            </td>
+
+            <td>
+              <b>
+                ${x.pts}
+              </b>
+            </td>
+
+          </tr>
+
+        `;
+
+      })
+
+      .join("");
+
+
+  if (!arr.length) {
+
+    rows.innerHTML = `
+
+      <tr>
+
+        <td colspan="8">
+          No teams found.
+        </td>
+
+      </tr>
+
+    `;
+
+  }
+
+}
+
+
+// ----------------------------------------------------
+// FALLBACK OVERS
+// ----------------------------------------------------
+
+function fallbackOvers(
+  oversText,
+  legalBalls,
+  matchOvers,
+  wickets
+) {
+
+  const allOut =
+    Number(wickets || 0) >= 10;
+
+
+  if (allOut) {
+
+    return Number(
+      matchOvers || 20
+    );
+
+  }
+
+
+  if (
+    legalBalls !== undefined &&
+    legalBalls !== null
+  ) {
+
+    return ballsToOvers(
+      legalBalls
+    );
+
+  }
+
+
+  if (!oversText) {
+    return 0;
+  }
+
+
+  const parts =
+    String(oversText)
+      .split(".");
+
+
+  const overs =
+    Number(parts[0] || 0);
+
+
+  const balls =
+    Number(parts[1] || 0);
+
+
+  return (
+    overs +
+    balls / 6
+  );
+
+}
+
+
+// ----------------------------------------------------
+// NRR FORMAT
+// ----------------------------------------------------
+
+function formatNRR(nrr) {
+
+  const value =
+    Number(nrr || 0);
+
+
+  if (
+    Math.abs(value) < 0.0005
+  ) {
+
+    return "0.000";
+
+  }
+
+
+  return value.toFixed(3);
+
+}
+
+
+// ----------------------------------------------------
+// INITIAL LOAD
+// ----------------------------------------------------
+
 load();
-</script></body></html>
+
+</script>
+
+</body>
+</html>
