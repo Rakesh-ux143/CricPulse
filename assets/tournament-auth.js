@@ -49,3 +49,6 @@ function esc(v) {
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
   }[c]));
 }
+function requireTournamentLogin() {
+  return requireTournament();
+}
